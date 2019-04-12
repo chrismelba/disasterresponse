@@ -1,24 +1,60 @@
 import sys
+# import libraries
+import nltk
+nltk.download(['punkt', 'wordnet'])
+import pandas as pd
+from sqlalchemy import create_engine
+import numpy as np
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 
+import pickle
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import f1_score, make_scorer
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 def load_data(database_filepath):
-    pass
-
+    engine = create_engine('sqlite:///'+database_filepath)
+    df = pd.read_sql("SELECT * FROM messages", engine)
+    category_names = df.iloc[:, 5:].columns
+    X = df.message.values
+    Y = df.iloc[:,5:].values
+    return X, Y, category_names
 
 def tokenize(text):
-    pass
+    tokens = word_tokenize(text)
+    lemmatizer = WordNetLemmatizer()
+
+    clean_tokens = []
+    for tok in tokens:
+        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
+        clean_tokens.append(clean_tok)
+
+    return clean_tokens
 
 
 def build_model():
-    pass
+    pipeline = Pipeline([
+        ('vect', CountVectorizer(tokenizer=tokenize, max_df = 0.5, max_features = 5000)),
+        ('tfidf', TfidfTransformer(use_idf = False)),
+        ('clf', MultiOutputClassifier(RandomForestClassifier(max_depth = 10, min_samples_split = 3, n_estimators = 200, class_weight = 'balanced')))
+    ])
+    return pipeline
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    Y_pred = model.predict(X_test)
+    for i in range(Y_pred.shape[1]):
+        print(category_names[i])
+        print(classification_report(Y_test[:, i], Y_pred[:, i]))
 
 
 def save_model(model, model_filepath):
-    pass
+    pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
