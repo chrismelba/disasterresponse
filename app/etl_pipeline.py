@@ -2,7 +2,7 @@ import pandas as pd
 import argparse
 
 parser = argparse.ArgumentParser(
-    description='Program to train a Neural Net on your data with various options',
+    description='ETL Pipeline for disaster data',
 )
 parser.add_argument('-messages', action='store', type=str, help = 'The messages file to be import', default = 'messages.csv')
 parser.add_argument('-categories', action = 'store', type = str, help = 'The category file to be import', default = 'categories.csv')
@@ -28,7 +28,8 @@ categories.head()
 df.drop('categories', axis = 1, inplace = True)
 df = pd.concat([df, categories], axis = 1)
 df.drop_duplicates(inplace = True)
-
+print(df.head())
+print("All done")
 from sqlalchemy import create_engine
 engine = create_engine('sqlite:///disaster.db')
 df.to_sql('messages', engine, index=False)
