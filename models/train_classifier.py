@@ -18,6 +18,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 def load_data(database_filepath):
+    '''
+    Load and split the data from a specified database filepath
+    Inputs: database_filepath - the user specified path to the data
+    Outputs: X - The messages
+             Y - The categories of those messages
+             category_names - the corresponding names of those categories
+    '''
     engine = create_engine('sqlite:///'+database_filepath)
     df = pd.read_sql("SELECT * FROM messages", engine)
     category_names = df.iloc[:, 5:].columns
@@ -26,6 +33,11 @@ def load_data(database_filepath):
     return X, Y, category_names
 
 def tokenize(text):
+    '''
+    Takes a text string, tokenizes, lemmatizes and case-normalizes it
+    Inputs: text - a text string
+    Outputs: clean_tokens - a list of cleaned tokens
+    '''
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
@@ -38,6 +50,11 @@ def tokenize(text):
 
 
 def build_model():
+    '''
+    Builds a model based on parameters researched earlier. This is the result of an exhaustive 5 hour grid search.
+    Inputs: none
+    Outputs: pipeline - An sklearn pipeline model
+    '''
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize, max_df = 0.5, max_features = 5000)),
         ('tfidf', TfidfTransformer(use_idf = False)),
@@ -47,6 +64,13 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    '''
+    Evalutes the model using sklearns 'classification report' function to return precision and recall for each class
+    Inputs: model - an sklearn model (or pipeline)
+            X_test - the test set data
+            Y_test - the correct categories for the test data
+            category_names - the names of the categories being predicted
+    '''
     Y_pred = model.predict(X_test)
     for i in range(Y_pred.shape[1]):
         print(category_names[i])
@@ -54,10 +78,22 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    '''
+    Saves an sklearn model to a pickle file
+    Inputs: model - an sklearn trained model
+            model_filepath - the user specified location for the model
+    Outputs: None
+    '''
     pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
+    '''
+    Takes in user arguments for database input and pickle model output to load data and train a model
+    Prints to terminal the evaluation of that model    
+    Finishes by saving that model to a pickle file to be used in the web app
+    '''
+    
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))

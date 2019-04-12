@@ -4,12 +4,22 @@ import argparse
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    '''
+    Based on the messages and categories specified, this will create, merge and return a dataframe
+    Inputs: messages_filepath, categories_filepath - Both are filepaths to the required csv files
+    Output: df - A merged dataframe containing both messages and their categorization
+    '''
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     df = messages.merge(categories, on='id')
     return df
 
 def clean_data(df):
+    '''
+    A function to get useful column names and turn categories into integers
+    Inputs: df - the dataframe to be cleaned
+    Outputs: df - the clean dataframe
+    '''
     categories = df.categories.str.split(';', expand = True)
     row = categories.iloc[0, :]
     category_colnames = list(map((lambda x: x[:-2]), row))
@@ -27,12 +37,20 @@ def clean_data(df):
     return df
 
 def save_data(df, database_filename):
-    
+    '''
+    Saves the dataframe to a specified database
+    Inputs: df - the dataframe to be saved 
+            database_filename - the location to save
+    Outputs: None
+    '''
     engine = create_engine('sqlite:///'+database_filename)
     df.to_sql('messages', engine, index=False)  
 
 
 def main():
+    '''
+    This function takes in system args and loads, cleans and outputs the messages and categories to the specified path
+    '''
     if len(sys.argv) == 4:
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]
