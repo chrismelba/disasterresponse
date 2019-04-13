@@ -56,11 +56,24 @@ def build_model():
     Outputs: pipeline - An sklearn pipeline model
     '''
     pipeline = Pipeline([
-        ('vect', CountVectorizer(tokenizer=tokenize, max_df = 0.5, max_features = 5000)),
-        ('tfidf', TfidfTransformer(use_idf = False)),
-        ('clf', MultiOutputClassifier(RandomForestClassifier(max_depth = 10, min_samples_split = 3, n_estimators = 200, class_weight = 'balanced')))
+        ('vect', CountVectorizer(tokenizer=tokenize)),
+        ('tfidf', TfidfTransformer()),
+        ('clf', MultiOutputClassifier(RandomForestClassifier()))
     ])
-    return pipeline
+    parameters = {
+    'tfidf__use_idf': [True, False],
+    'vect__max_df': [0.5, 0.75],
+    'vect__max_features': [None, 5000],
+    'clf__estimator__max_depth': [5,10],
+    'clf__estimator__n_estimators' : [50, 100, 200],
+    'clf__estimator__min_samples_split': [2, 3, 4],
+    'clf__estimator__class_weight':['balanced']
+    }
+
+    cv = GridSearchCV(pipeline, param_grid = parameters, verbose = 2, scoring = make_scorer(f1_score, average = 'weighted'))
+    
+    cv.fit(X_train, Y_train)
+    return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
